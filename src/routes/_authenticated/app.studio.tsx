@@ -106,6 +106,7 @@ function StudioPage() {
   const runBuildScene = useServerFn(buildScene);
   const runSetStatus = useServerFn(setVideoStatus);
   const runSignAssets = useServerFn(signAssets);
+  const runPublish = useServerFn(publishVideo);
 
   const produce = useCallback(
     async (video: VideoRow) => {
@@ -154,8 +155,18 @@ function StudioPage() {
           data: { videoId: video.id, status: "ready", progress: 100, videoPath: path, error: null },
         });
         setLocalProgress((p) => ({ ...p, [video.id]: 1 }));
+
+        // 5. Send it to every account set to post automatically.
+        try {
+          const posted = await runPublish({ data: { videoId: video.id } });
+          const ok = posted.results.filter((r) => r.status === "posted").length;
+          if (ok > 0) toast.success(`Video is ready and posted to ${ok} account(s)`);
+          else toast.success("Video is ready");
+        } catch {
+          toast.success("Video is ready, but auto-posting failed");
+        }
+
         await refresh();
-        toast.success("Video is ready");
       } catch (error) {
         const message = error instanceof Error ? error.message : "Production failed";
         await runSetStatus({ data: { videoId: video.id, status: "failed", error: message } }).catch(
@@ -167,7 +178,7 @@ function StudioPage() {
         setBusyId(null);
       }
     },
-    [refresh, runBuildScene, runSetStatus, runSignAssets],
+    [refresh, runBuildScene, runPublish, runSetStatus, runSignAssets],
   );
 
   const download = useCallback(
