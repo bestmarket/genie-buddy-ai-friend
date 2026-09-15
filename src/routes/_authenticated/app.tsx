@@ -13,6 +13,7 @@ const TABS = [
   { to: "/app/sources", label: "Sources" },
   { to: "/app/chat", label: "Chat" },
   { to: "/app/studio", label: "Studio" },
+  { to: "/app/channels", label: "Channels" },
 ] as const;
 
 function AppLayout() {

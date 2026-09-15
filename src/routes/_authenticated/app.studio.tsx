@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { CalendarClock, Download, Film, Loader2, Play, Trash2, Wand2 } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { publishVideo } from "@/lib/channels.functions";
 import { renderVideo } from "@/lib/renderVideo";
 import type { Scene } from "@/lib/studio.functions";
 import {
@@ -105,6 +106,7 @@ function StudioPage() {
   const runBuildScene = useServerFn(buildScene);
   const runSetStatus = useServerFn(setVideoStatus);
   const runSignAssets = useServerFn(signAssets);
+  const runPublish = useServerFn(publishVideo);
 
   const produce = useCallback(
     async (video: VideoRow) => {
@@ -153,8 +155,18 @@ function StudioPage() {
           data: { videoId: video.id, status: "ready", progress: 100, videoPath: path, error: null },
         });
         setLocalProgress((p) => ({ ...p, [video.id]: 1 }));
+
+        // 5. Send it to every account set to post automatically.
+        try {
+          const posted = await runPublish({ data: { videoId: video.id } });
+          const ok = posted.results.filter((r) => r.status === "posted").length;
+          if (ok > 0) toast.success(`Video is ready and posted to ${ok} account(s)`);
+          else toast.success("Video is ready");
+        } catch {
+          toast.success("Video is ready, but auto-posting failed");
+        }
+
         await refresh();
-        toast.success("Video is ready");
       } catch (error) {
         const message = error instanceof Error ? error.message : "Production failed";
         await runSetStatus({ data: { videoId: video.id, status: "failed", error: message } }).catch(
@@ -166,7 +178,7 @@ function StudioPage() {
         setBusyId(null);
       }
     },
-    [refresh, runBuildScene, runSetStatus, runSignAssets],
+    [refresh, runBuildScene, runPublish, runSetStatus, runSignAssets],
   );
 
   const download = useCallback(
@@ -186,6 +198,26 @@ function StudioPage() {
     },
     [runSignAssets],
   );
+
+  // Keep the list fresh so scheduled videos appear the moment they are prepared.
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      void refresh();
+    }, 30000);
+    return () => window.clearInterval(timer);
+  }, [refresh]);
+
+  // Finish any scheduled video the background scheduler has already prepared.
+  const autoRan = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (busyId) return;
+    const next = videos.find((v) => v.status === "assembling" && !autoRan.current.has(v.id));
+    if (!next) return;
+    autoRan.current.add(next.id);
+    void produce(next);
+  }, [busyId, produce, videos]);
+
+
 
   if (workspace.isLoading) {
     return (
@@ -424,7 +456,8 @@ function StudioPage() {
                     </Button>
                   </div>
 
-                  {busy || video.status === "building" || video.status === "rendering" ? (
+                  {busy ||
+                  ["building", "rendering", "preparing", "assembling"].includes(video.status) ? (
                     <Progress value={pct} />
                   ) : null}
                   {video.error ? <p className="text-xs text-destructive">{video.error}</p> : null}
