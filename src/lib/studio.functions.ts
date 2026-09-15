@@ -569,7 +569,16 @@ export const setVideoStatus = createServerFn({ method: "POST" })
     z
       .object({
         videoId: z.string().uuid(),
-        status: z.enum(["queued", "scheduled", "building", "rendering", "ready", "failed"]),
+        status: z.enum([
+          "queued",
+          "scheduled",
+          "preparing",
+          "assembling",
+          "building",
+          "rendering",
+          "ready",
+          "failed",
+        ]),
         progress: z.number().int().min(0).max(100).optional(),
         videoPath: z.string().nullable().optional(),
         error: z.string().nullable().optional(),

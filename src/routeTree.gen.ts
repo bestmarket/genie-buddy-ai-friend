@@ -17,6 +17,7 @@ import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAppChatRouteImport } from './routes/_authenticated/app.chat'
 import { Route as AuthenticatedAppSourcesRouteImport } from './routes/_authenticated/app.sources'
 import { Route as AuthenticatedAppStudioRouteImport } from './routes/_authenticated/app.studio'
+import { Route as ApiPublicHooksScheduledVideosRouteImport } from './routes/api/public/hooks/scheduled-videos'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -57,6 +58,12 @@ const AuthenticatedAppStudioRoute = AuthenticatedAppStudioRouteImport.update({
   path: '/studio',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const ApiPublicHooksScheduledVideosRoute =
+  ApiPublicHooksScheduledVideosRouteImport.update({
+    id: '/api/public/hooks/scheduled-videos',
+    path: '/api/public/hooks/scheduled-videos',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -66,6 +73,7 @@ export interface FileRoutesByFullPath {
   '/app/sources': typeof AuthenticatedAppSourcesRoute
   '/app/studio': typeof AuthenticatedAppStudioRoute
   '/app/': typeof AuthenticatedAppIndexRoute
+  '/api/public/hooks/scheduled-videos': typeof ApiPublicHooksScheduledVideosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -74,6 +82,7 @@ export interface FileRoutesByTo {
   '/app/sources': typeof AuthenticatedAppSourcesRoute
   '/app/studio': typeof AuthenticatedAppStudioRoute
   '/app': typeof AuthenticatedAppIndexRoute
+  '/api/public/hooks/scheduled-videos': typeof ApiPublicHooksScheduledVideosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -85,6 +94,7 @@ export interface FileRoutesById {
   '/_authenticated/app/sources': typeof AuthenticatedAppSourcesRoute
   '/_authenticated/app/studio': typeof AuthenticatedAppStudioRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
+  '/api/public/hooks/scheduled-videos': typeof ApiPublicHooksScheduledVideosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -96,8 +106,16 @@ export interface FileRouteTypes {
     | '/app/sources'
     | '/app/studio'
     | '/app/'
+    | '/api/public/hooks/scheduled-videos'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/app/chat' | '/app/sources' | '/app/studio' | '/app'
+  to:
+    | '/'
+    | '/auth'
+    | '/app/chat'
+    | '/app/sources'
+    | '/app/studio'
+    | '/app'
+    | '/api/public/hooks/scheduled-videos'
   id:
     | '__root__'
     | '/'
@@ -108,12 +126,14 @@ export interface FileRouteTypes {
     | '/_authenticated/app/sources'
     | '/_authenticated/app/studio'
     | '/_authenticated/app/'
+    | '/api/public/hooks/scheduled-videos'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicHooksScheduledVideosRoute: typeof ApiPublicHooksScheduledVideosRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -174,6 +194,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppStudioRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/api/public/hooks/scheduled-videos': {
+      id: '/api/public/hooks/scheduled-videos'
+      path: '/api/public/hooks/scheduled-videos'
+      fullPath: '/api/public/hooks/scheduled-videos'
+      preLoaderRoute: typeof ApiPublicHooksScheduledVideosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -209,6 +236,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicHooksScheduledVideosRoute: ApiPublicHooksScheduledVideosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
