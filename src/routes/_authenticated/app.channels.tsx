@@ -73,7 +73,7 @@ function ChannelsPage() {
 
   const post = useMutation({
     mutationFn: useServerFn(publishVideo),
-    onSuccess: async (result) => {
+    onSuccess: async (result: { results: Array<{ status: string; error: string | null }> }) => {
       await refresh();
       const failed = result.results.filter((r) => r.status !== "posted");
       if (failed.length > 0) toast.error(failed[0]?.error ?? "Some posts failed");
