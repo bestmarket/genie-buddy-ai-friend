@@ -456,7 +456,8 @@ function StudioPage() {
                     </Button>
                   </div>
 
-                  {busy || video.status === "building" || video.status === "rendering" ? (
+                  {busy ||
+                  ["building", "rendering", "preparing", "assembling"].includes(video.status) ? (
                     <Progress value={pct} />
                   ) : null}
                   {video.error ? <p className="text-xs text-destructive">{video.error}</p> : null}
