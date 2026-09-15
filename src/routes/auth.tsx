@@ -44,6 +44,8 @@ function AuthPage() {
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     setBusy(true);
+    setMessage(null);
+    setNeedsConfirm(false);
     try {
       const result =
         mode === "signin"
@@ -55,12 +57,45 @@ function AuthPage() {
             });
       if (result.error) throw result.error;
       if (mode === "signup" && !result.data.session) {
+        setMessage({
+          kind: "info",
+          text: "Almost there — check your inbox and click the confirmation link, then sign in.",
+        });
         toast.success("Check your inbox to confirm your email.");
         return;
       }
       navigate({ to: "/app/sources" });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not sign you in");
+      const raw = error instanceof Error ? error.message : "Could not sign you in";
+      const unconfirmed = /not confirmed|confirm/i.test(raw);
+      const text = unconfirmed
+        ? "This email hasn't been confirmed yet. Check your inbox for the confirmation link."
+        : /invalid login/i.test(raw)
+          ? "That email and password don't match an account."
+          : raw;
+      setNeedsConfirm(unconfirmed);
+      setMessage({ kind: "error", text });
+      toast.error(text);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function resendConfirmation() {
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email,
+        options: { emailRedirectTo: `${window.location.origin}/app/sources` },
+      });
+      if (error) throw error;
+      setMessage({ kind: "info", text: "Confirmation email sent — check your inbox." });
+      toast.success("Confirmation email sent");
+    } catch (error) {
+      const text = error instanceof Error ? error.message : "Could not send the email";
+      setMessage({ kind: "error", text });
+      toast.error(text);
     } finally {
       setBusy(false);
     }
