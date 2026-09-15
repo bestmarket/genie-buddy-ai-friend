@@ -139,9 +139,32 @@ function AuthPage() {
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
+          {message ? (
+            <p
+              role="status"
+              className={
+                message.kind === "error"
+                  ? "rounded-md bg-destructive/10 p-3 text-sm text-destructive"
+                  : "rounded-md bg-accent p-3 text-sm text-foreground"
+              }
+            >
+              {message.text}
+            </p>
+          ) : null}
           <Button type="submit" className="w-full" disabled={busy}>
             {mode === "signin" ? "Sign in" : "Create account"}
           </Button>
+          {needsConfirm ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              disabled={busy || !email}
+              onClick={resendConfirmation}
+            >
+              Resend confirmation email
+            </Button>
+          ) : null}
         </form>
 
         <Button variant="outline" className="mt-3 w-full" onClick={google}>
