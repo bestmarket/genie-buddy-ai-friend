@@ -399,9 +399,7 @@ function StudioPage() {
             {videos.map((video) => {
               const scenes = (video.scenes as Scene[]) ?? [];
               const busy = busyId === video.id;
-              const pct = Math.round(
-                (localProgress[video.id] ?? video.progress / 100 || 0) * 100,
-              );
+              const pct = Math.round((localProgress[video.id] ?? video.progress / 100) * 100);
               const styleLabel =
                 VIDEO_STYLES.find((s) => s.id === video.style)?.label ?? video.style ?? "Cinematic";
               return (
