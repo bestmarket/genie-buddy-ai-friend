@@ -199,6 +199,26 @@ function StudioPage() {
     [runSignAssets],
   );
 
+  // Keep the list fresh so scheduled videos appear the moment they are prepared.
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      void refresh();
+    }, 30000);
+    return () => window.clearInterval(timer);
+  }, [refresh]);
+
+  // Finish any scheduled video the background scheduler has already prepared.
+  const autoRan = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (busyId) return;
+    const next = videos.find((v) => v.status === "assembling" && !autoRan.current.has(v.id));
+    if (!next) return;
+    autoRan.current.add(next.id);
+    void produce(next);
+  }, [busyId, produce, videos]);
+
+
+
   if (workspace.isLoading) {
     return (
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
